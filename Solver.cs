@@ -91,6 +91,8 @@ public class Solver
     private static bool BFS(Space start, Space goal)
     {
         var queue = new Queue<Space>();
+        var prev = new Dictionary<Space, Space?>{ { start, null } };
+
         queue.Enqueue(start);
 
         while (queue.Count > 0)
@@ -105,21 +107,32 @@ public class Solver
             if (currSpace == goal)
             {
                 currSpace.IsSolution = true;
-                return true;
+                break;
             }
 
             Space[] spaces = new Space[] { currSpace.Top, currSpace.Left, currSpace.Bottom, currSpace.Right };
             
             foreach (var space in spaces)
             {
-                if (space is not null)
+                if (space is not null && !space.Visited)
                 {
+                    prev[space] = currSpace;
                     queue.Enqueue(space);
                 }
             }
         }
 
-        return false;
+        var attempt = goal;
+        while (attempt != start)
+        {
+            if (!prev.ContainsKey(attempt))
+                return false;
+
+            attempt = prev[attempt];
+            attempt.IsSolution = true;
+        }
+
+        return true;
     }
 
     private static bool Dijkstra(Space start, Space goal)
@@ -185,6 +198,66 @@ public class Solver
 
     private static bool AStar(Space start, Space goal)
     {
-        throw new NotImplementedException();
+        var queue = new PriorityQueue<Space, float>();
+        var dist = new Dictionary<Space, float>();
+        var prev = new Dictionary<Space, Space>();
+
+        queue.Enqueue(start, 0);
+        dist[start] = 0.0f;
+
+        while (queue.Count > 0)
+        {
+            var currSpace = queue.Dequeue();
+
+            if (currSpace.Visited)
+                continue;
+
+            currSpace.Visited = true;
+
+            if (currSpace == goal)
+            {
+                currSpace.IsSolution = true;
+                break;
+            }
+
+            Space[] spaces = new Space[] { currSpace.Top, currSpace.Left, currSpace.Bottom, currSpace.Right };
+
+            foreach (var space in spaces)
+            {
+                if (space is not null)
+                {
+                    var dx = space.X - goal.X;
+                    var dy = space.Y - goal.Y;
+                    var penalty = dx * dx + dy * dy;
+
+                    var newWeight = dist[currSpace] + 1 + penalty;
+
+                    if (!dist.ContainsKey(space))
+                    {
+                        dist[space] = float.PositiveInfinity;
+                        prev[space] = null!;
+                    }
+
+                    if (newWeight < dist[space])
+                    {
+                        dist[space] = newWeight;
+                        prev[space] = currSpace;
+                        queue.Enqueue(space, newWeight);
+                    }
+                }
+            }
+        }
+
+        var attempt = goal;
+        while (attempt != start)
+        {
+            if (!prev.ContainsKey(attempt))
+                return false;
+
+            attempt = prev[attempt];
+            attempt.IsSolution = true;
+        }
+
+        return true;
     }
 }
