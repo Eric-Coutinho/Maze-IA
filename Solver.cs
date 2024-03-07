@@ -228,9 +228,9 @@ public class Solver
                 {
                     var dx = space.X - goal.X;
                     var dy = space.Y - goal.Y;
-                    var penalty = dx * dx + dy * dy;
+                    var penalty = Math.Sqrt(dx * dx + dy * dy);
 
-                    var newWeight = dist[currSpace] + 1 + penalty;
+                    var newWeight = dist[currSpace] + 1;
 
                     if (!dist.ContainsKey(space))
                     {
@@ -238,11 +238,11 @@ public class Solver
                         prev[space] = null!;
                     }
 
-                    if (newWeight < dist[space])
+                    if (newWeight <= dist[space])
                     {
-                        dist[space] = newWeight;
+                        dist[space] = (float)newWeight;
                         prev[space] = currSpace;
-                        queue.Enqueue(space, newWeight);
+                        queue.Enqueue(space, (float)(newWeight + penalty));
                     }
                 }
             }
